@@ -11,16 +11,33 @@ if not exist "%~1" (
     exit /b 1
 )
 
-REM 引数1のディレクトリに.gitkeepを作成
-echo %~1
-touch "%~1\.gitkeep"
+REM touchコマンドが利用できるか確認
+where touch >nul 2>nul
+set TOUCH_AVAILABLE=%errorlevel%
+
+REM touchコマンドを使うか代替処理をするかのフラグに基づいて処理を実行
+if %TOUCH_AVAILABLE% == 0 (
+    REM touchコマンドが使える場合
+    echo %~1
+    touch "%~1\.gitkeep"
+) else (
+    REM touchコマンドが使えない場合（代替方法）
+    echo %~1
+    echo. > "%~1\.gitkeep"
+)
 
 if "%~2" == "/recursive" (
     REM 再帰的にサブディレクトリを検索して.gitkeepを作成
     for /r "%~1" %%d in (.) do (
         if exist "%%d\" (
             echo Processing directory: %%d
-            touch "%%d\.gitkeep"
+            if %TOUCH_AVAILABLE% == 0 (
+                REM touchコマンドが使える場合
+                touch "%%d\.gitkeep"
+            ) else (
+                REM touchコマンドが使えない場合（代替方法）
+                echo. > "%%d\.gitkeep"
+            )
         )
     )
 )
